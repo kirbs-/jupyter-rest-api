@@ -1,7 +1,7 @@
 from app import app, celery#, models, login_manager #, damien, predict
 import config
 from flask import render_template, request, redirect, abort, flash, jsonify, url_for
-from flask_login import login_user, login_required, current_user
+# from flask_login import login_user, login_required, current_user
 import json, os
 # from werkzeug.utils import secure_filename
 import nbformat
