@@ -2,7 +2,7 @@ from app import app, celery#, models, login_manager #, damien, predict
 import config
 from flask import render_template, request, redirect, abort, flash, jsonify, url_for
 from flask_login import login_user, login_required, current_user
-import json, boto3, os
+import json, os
 # from werkzeug.utils import secure_filename
 import nbformat
 from nbconvert.preprocessors import ExecutePreprocessor
@@ -23,7 +23,7 @@ def index():
 def run_notebook(self, notebook_filename, working_dir):
     with open(os.path.join(config.NOTEBOOK_ROOT, notebook_filename)) as f:
         nb = nbformat.read(f, as_version=4)
-        ep = ExecutePreprocessor(timeout=600, kernel_name=nb['metadata']['kernelspec']['name'])
+        ep = ExecutePreprocessor(timeout=21600, kernel_name=nb['metadata']['kernelspec']['name'])
 
         self.update_state(state='PROGRESS', meta={'status': 'Notebook executing'})
         if working_dir:

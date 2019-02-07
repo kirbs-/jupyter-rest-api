@@ -1,5 +1,5 @@
 from flask import Flask
-from jinja2 import Environment
+# from jinja2 import Environment
 # from hamlish_jinja import HamlishExtension, HamlishTagExtension
 # from flask_sqlalchemy import SQLAlchemy
 # # from flask.ext.heroku import Heroku
