@@ -9,4 +9,4 @@ DEBUG = True
 
 UPLOAD_FOLDER = '/Users/ckirby/PycharmProjects/tv_failure_recognition/app/static'
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
-NOTEBOOK_ROOT = '/Users/ckirby/Documents/iPython'
+NOTEBOOK_ROOT = '/home/jovyan/s3'
