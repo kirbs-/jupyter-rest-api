@@ -60,3 +60,13 @@ def taskstatus(task_id):
             'status': str(task.info),  # this is the exception raised
         }
     return jsonify(response)
+
+
+@app.route('/health')
+def health_check():
+    """
+    Adding as part of status fail on load balancer in long-running task so that status always healthy.
+    :return: Static JSON
+    :rtype: Dictionary
+    """
+    return {'msg': 'Healthy'}
