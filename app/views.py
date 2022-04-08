@@ -25,7 +25,7 @@ def index():
 def run_notebook(self, notebook_filename, working_dir):
     with open(os.path.join(config.NOTEBOOK_ROOT, notebook_filename)) as f:
         nb = nbformat.read(f, as_version=4)
-        ep = ExecutePreprocessor(timeout=21600, kernel_name=nb['metadata']['kernelspec']['name'])
+        ep = ExecutePreprocessor(timeout=172800, kernel_name=nb['metadata']['kernelspec']['name'])
 
         self.update_state(state='PROGRESS', meta={'status': 'Notebook executing'})
         if working_dir:
