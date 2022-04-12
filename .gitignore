@@ -1,5 +1,7 @@
+.idea/
 tmp/**
 instance_*
+*.idea/*
 *.pyc
 *.egg*
 .python-version
