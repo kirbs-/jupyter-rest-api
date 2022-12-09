@@ -11,3 +11,6 @@ dstk-*tar*
 .idea/*
 workspace.xml
 misc.xml
+*.ipyn*
+__pycache__
+untitled.txt
