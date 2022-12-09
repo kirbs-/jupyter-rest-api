@@ -92,7 +92,7 @@ def index():
 def run_notebook(self, notebook_filename, working_dir, requirements_filename):
     with open(os.path.join(notebook_filename)) as f:
         nb = nbformat.read(f, as_version=4)
-        meta =  {'cell_results': list()}
+        meta =  {'cell_results': list(), 'cell_cnt': len(nb.cells)}
         res = 'n/a'
 
         # install dependencies if present
@@ -129,7 +129,8 @@ def taskstatus(task_id):
             'status': task.info.get('status', ''),
             'dependecy_status': str(task.info.get('dependency_status')),
             'cell_results': str(task.info.get('cell_results')),
-            'index': str(task.info.get('index'))
+            'index': str(task.info.get('index')),
+            'cell_cnt': str(task.info.get('cell_cnt'))
         }
         if 'result' in task.info:
             response['result'] = task.info['result']
