@@ -110,7 +110,7 @@ def run_notebook(self, notebook_filename, working_dir, requirements_filename):
             nb_result = ep.preprocess(nb, {'metadata': {'path': config.NOTEBOOK_ROOT}})
         logging.info(nb_result)
 
-    return {'status': 'Task finished', 'dependency_status': meta['dependency_status'], 'cell_results': meta['cell_results'], 'result': nb_result}
+    return {'status': 'Task finished', 'dependency_status': meta['dependency_status'], 'cell_results': meta['cell_results'], 'result': nb_result, 'cell_cnt': len(nb.cells), 'index': len(nb.cells)}
 
 
 @app.route('/status/<task_id>')
