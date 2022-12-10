@@ -97,7 +97,7 @@ def run_notebook(self, notebook_filename, working_dir, requirements_filename):
 
         # install dependencies if present
         if requirements_filename:
-            res = install_requirements(self, nb['metadata']['kernelspec']['display_name'], requirements_filename)
+            res = install_requirements(self, nb['metadata']['kernelspec']['display_name'], os.path.join(config.NOTEBOOK_ROOT, requirements_filename))
 
         meta['status'] = 'Notebook executing'
         meta['dependency_status'] = f'Result from pip install\n{res}'
