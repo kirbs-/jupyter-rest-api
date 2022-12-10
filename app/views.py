@@ -90,7 +90,7 @@ def index():
 
 @celery.task(bind=True)
 def run_notebook(self, notebook_filename, working_dir, requirements_filename):
-    with open(os.path.join(notebook_filename)) as f:
+    with open(os.path.join(config.NOTEBOOK_ROOT, notebook_filename)) as f:
         nb = nbformat.read(f, as_version=4)
         meta =  {'cell_results': list(), 'cell_cnt': len(nb.cells)}
         res = 'n/a'
