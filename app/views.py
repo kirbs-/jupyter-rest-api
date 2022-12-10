@@ -90,14 +90,17 @@ def index():
 
 @celery.task(bind=True)
 def run_notebook(self, notebook_filename, working_dir, requirements_filename):
-    with open(os.path.join(config.NOTEBOOK_ROOT, notebook_filename)) as f:
+    if not working_dir:
+        working_dir = config.NOTEBOOK_ROOT
+
+    with open(os.path.join(working_dir notebook_filename)) as f:
         nb = nbformat.read(f, as_version=4)
         meta =  {'cell_results': list(), 'cell_cnt': len(nb.cells)}
         res = 'n/a'
 
         # install dependencies if present
         if requirements_filename:
-            res = install_requirements(self, nb['metadata']['kernelspec']['display_name'], os.path.join(config.NOTEBOOK_ROOT, requirements_filename))
+            res = install_requirements(self, nb['metadata']['kernelspec']['display_name'], os.path.join(working_dir, requirements_filename))
 
         meta['status'] = 'Notebook executing'
         meta['dependency_status'] = f'Result from pip install\n{res}'
