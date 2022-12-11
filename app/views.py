@@ -93,7 +93,7 @@ def run_notebook(self, notebook_filename, working_dir, requirements_filename):
     if not working_dir:
         working_dir = config.NOTEBOOK_ROOT
 
-    with open(os.path.join(working_dir notebook_filename)) as f:
+    with open(os.path.join(working_dir, notebook_filename)) as f:
         nb = nbformat.read(f, as_version=4)
         meta =  {'cell_results': list(), 'cell_cnt': len(nb.cells)}
         res = 'n/a'
@@ -141,7 +141,7 @@ def taskstatus(task_id):
         # something went wrong in the background job
         response = {
             'state': task.state,
-            'status': str(task.info),  # this is the exception raised
+            'status': str(task.info).decode(),  # this is the exception raised
         }
 
     return jsonify(response)
