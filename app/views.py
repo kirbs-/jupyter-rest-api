@@ -9,6 +9,13 @@ from nbconvert.preprocessors import ExecutePreprocessor
 import subprocess
 import logging
 import platform
+import re
+
+
+def escape_ansi(line):
+    line = bytes(line, 'utf-8').decode("unicode_escape")
+    ansi_escape =re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]')
+    return ansi_escape.sub('', line).splitlines()
 
 
 class TrackableExecutePreprocessor(ExecutePreprocessor):
@@ -62,11 +69,11 @@ def run(cmd):
 
 def install_requirements(self, environ_name, requirements_filename):
     self.update_state(state="INSTALLING_DEPENDENCIES", meta={'dependency_status': f'Activating pyenv environment {environ_name}'})
-    cmd = ['pyenv', 'activate', environ_name]
+    cmd = ['pyenv', 'local', environ_name]
     logging.debug(f"Activation command result: {run(cmd)}")
     self.update_state(state="INSTALLING_DEPENDENCIES", meta={'dependency_status': f'Executing pip install from file {requirements_filename}'})
 
-    cmd = ['pip', 'install', '-r', requirements_filename]
+    cmd = ['$(pyenv which pip)', 'install', '-r', requirements_filename]
     res = run(cmd)
     self.update_state(state="DEPENDENCIES_INSTALLED", meta={'dependency_status': f'Result from pip install\n{res}'})
     logging.debug(f"pip install result: {res}")
@@ -107,14 +114,16 @@ def run_notebook(self, notebook_filename, working_dir, requirements_filename):
 
         self.update_state(state='PROGRESS', meta=meta)
         ep = TrackableExecutePreprocessor(task=self, meta=meta, timeout=172800, kernel_name=nb['metadata']['kernelspec']['name'])
-        if working_dir:
-            nb_result = ep.preprocess(nb, {'metadata': {'path': working_dir}})
-        else:
-            nb_result = ep.preprocess(nb, {'metadata': {'path': config.NOTEBOOK_ROOT}})
-        logging.info(nb_result)
-
-    return {'status': 'Task finished', 'dependency_status': meta['dependency_status'], 'cell_results': meta['cell_results'], 'result': nb_result, 'cell_cnt': len(nb.cells), 'index': len(nb.cells)}
-
+        try:
+            if working_dir:
+                nb_result = ep.preprocess(nb, {'metadata': {'path': working_dir}})
+            else:
+                nb_result = ep.preprocess(nb, {'metadata': {'path': config.NOTEBOOK_ROOT}})
+            logging.info(nb_result)
+            return {'status': 'Task finished', 'dependency_status': meta['dependency_status'], 'cell_results': meta['cell_results'], 'result': nb_result, 'cell_cnt': len(nb.cells), 'index': len(nb.cells)}
+        except Exception as e:
+            logging.info(f'Notebook exception: {e}')
+            return {'status': 'FAILURE', 'dependency_status': meta['dependency_status'], 'cell_results': meta['cell_results'], 'result': e, 'cell_cnt': len(nb.cells)}
 
 @app.route('/status/<task_id>')
 def taskstatus(task_id):
@@ -130,10 +139,10 @@ def taskstatus(task_id):
         response = {
             'state': task.state,
             'status': task.info.get('status', ''),
-            'dependecy_status': str(task.info.get('dependency_status')),
-            'cell_results': str(task.info.get('cell_results')),
-            'index': str(task.info.get('index')),
-            'cell_cnt': str(task.info.get('cell_cnt'))
+            'dependecy_status': str(task.info.get('dependency_status', '')),
+            'cell_results': str(task.info.get('cell_results', '')),
+            'index': str(task.info.get('index', '')),
+            'cell_cnt': str(task.info.get('cell_cnt', ''))
         }
         if 'result' in task.info:
             response['result'] = task.info['result']
@@ -141,7 +150,11 @@ def taskstatus(task_id):
         # something went wrong in the background job
         response = {
             'state': task.state,
-            'status': str(task.info).decode(),  # this is the exception raised
+            'status': escape_ansi(task.info),  # this is the exception raised
+            'dependecy_status': str(task.info.get('dependency_status', '')),
+            'cell_results': str(task.info.get('cell_results', '')),
+            'index': str(task.info.get('index', '')),
+            'cell_cnt': str(task.info.get('cell_cnt', ''))
         }
 
     return jsonify(response)
