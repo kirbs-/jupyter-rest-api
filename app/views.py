@@ -64,7 +64,9 @@ def run(cmd):
         except:
             return res
     except subprocess.CalledProcessError as e:
-        logging.debug(e.output)
+        logging.debug('Execption running command!')
+        logging.debug(e.output.decode())
+        return escape_ansi(e.output.decode())
 
 
 def install_requirements(self, environ_name, requirements_filename):
@@ -75,7 +77,7 @@ def install_requirements(self, environ_name, requirements_filename):
 
     cmd = ['$(pyenv which pip)', 'install', '-r', requirements_filename]
     res = run(cmd)
-    self.update_state(state="DEPENDENCIES_INSTALLED", meta={'dependency_status': f'Result from pip install\n{res}'})
+    self.update_state(state="DEPENDENCIES_INSTALLED", meta={'dependency_status': res})
     logging.debug(f"pip install result: {res}")
 
     return res
@@ -110,7 +112,7 @@ def run_notebook(self, notebook_filename, working_dir, requirements_filename):
             res = install_requirements(self, nb['metadata']['kernelspec']['display_name'], os.path.join(working_dir, requirements_filename))
 
         meta['status'] = 'Notebook executing'
-        meta['dependency_status'] = f'Result from pip install\n{res}'
+        meta['dependency_status'] = res
 
         self.update_state(state='PROGRESS', meta=meta)
         ep = TrackableExecutePreprocessor(task=self, meta=meta, timeout=172800, kernel_name=nb['metadata']['kernelspec']['name'])
@@ -123,7 +125,7 @@ def run_notebook(self, notebook_filename, working_dir, requirements_filename):
             return {'status': 'Task finished', 'dependency_status': meta['dependency_status'], 'cell_results': meta['cell_results'], 'result': nb_result, 'cell_cnt': len(nb.cells), 'index': len(nb.cells)}
         except Exception as e:
             logging.info(f'Notebook exception: {e}')
-            return {'status': 'FAILURE', 'dependency_status': meta['dependency_status'], 'cell_results': meta['cell_results'], 'result': e, 'cell_cnt': len(nb.cells)}
+            return {'status': 'FAILURE', 'dependency_status': meta['dependency_status'], 'cell_results': meta['cell_results'], 'result': escape_ansi(str(e)), 'cell_cnt': len(nb.cells)}
 
 @app.route('/status/<task_id>')
 def taskstatus(task_id):
@@ -135,13 +137,22 @@ def taskstatus(task_id):
             'state': task.state,
             'status': 'Pending...'
         }
+    elif task.state == 'SUCCESS' and task.status.get('status') == 'FAILURE':
+        response = {
+            'state': 'FAILURE',
+            'status': task.info.get('result'),  # this is the exception raised
+            'dependecy_status': task.info.get('dependency_status', ''),
+            'cell_results': str(task.info.get('cell_results', '')),
+            'index': str(task.info.get('index', '')),
+            'cell_cnt': str(task.info.get('cell_cnt', ''))
+        }
     elif task.state != 'FAILURE':
         response = {
             'state': task.state,
             'status': task.info.get('status', ''),
-            'dependecy_status': str(task.info.get('dependency_status', '')),
+            'dependecy_status': task.info.get('dependency_status', ''),
             'cell_results': str(task.info.get('cell_results', '')),
-            'index': str(task.info.get('index', '')),
+            # 'index': str(task.info.get('index', '')),
             'cell_cnt': str(task.info.get('cell_cnt', ''))
         }
         if 'result' in task.info:
@@ -150,8 +161,8 @@ def taskstatus(task_id):
         # something went wrong in the background job
         response = {
             'state': task.state,
-            'status': escape_ansi(task.info),  # this is the exception raised
-            'dependecy_status': str(task.info.get('dependency_status', '')),
+            'status': task.info.get('result'),  # this is the exception raised
+            'dependecy_status': task.info.get('dependency_status', ''),
             'cell_results': str(task.info.get('cell_results', '')),
             'index': str(task.info.get('index', '')),
             'cell_cnt': str(task.info.get('cell_cnt', ''))
