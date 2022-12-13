@@ -62,11 +62,11 @@ def run(cmd):
         try:
             return json.loads(res)
         except:
-            return res
+            return escape_ansi(res.decode())
     except subprocess.CalledProcessError as e:
         logging.debug('Execption running command!')
         logging.debug(e.output.decode())
-        return escape_ansi(e.output.decode())
+        return e.output.decode().splitlines()
 
 
 def install_requirements(self, environ_name, requirements_filename):
@@ -137,7 +137,7 @@ def taskstatus(task_id):
             'state': task.state,
             'status': 'Pending...'
         }
-    elif task.state == 'SUCCESS' and task.status.get('status') == 'FAILURE':
+    elif task.state == 'SUCCESS' and task.info.get('status') == 'FAILURE':
         response = {
             'state': 'FAILURE',
             'status': task.info.get('result'),  # this is the exception raised
